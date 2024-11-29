@@ -1,0 +1,84 @@
+<?php
+// API ключ и URL
+$api_key = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6Ijg4ZGY4Z...";
+$crm_url = "https://irynasheludchenko.kommo.com";
+
+// Получение данных из формы
+$name = $_POST['Name'];
+$phone = $_POST['Phone'];
+$car_class = $_POST['class'];
+$transfer_type = $_POST['transfer'];
+$comment = $_POST['Textarea'];
+
+// Формирование данных для CRM
+$data = [
+    "custom_fields_values" => [
+        [
+            "field_id" => 283614, // ID для Car Class
+            "values" => [
+                ["value" => $car_class]
+            ]
+        ],
+        [
+            "field_id" => 283544, // ID для Тип трансфера
+            "values" => [
+                ["value" => $transfer_type]
+            ]
+        ]
+    ],
+    "note" => $comment, // Примечание
+    "name" => $name,
+    "phone" => $phone
+];
+
+// Отправка данных через API
+$options = [
+    "http" => [
+        "header" => "Content-type: application/json\r\nAuthorization: Bearer $api_key",
+        "method" => "POST",
+        "content" => json_encode($data),
+    ]
+];
+$context = stream_context_create($options);
+$result = file_get_contents($crm_url, false, $context);
+
+if ($result === FALSE) {
+    echo "Ошибка отправки данных.";
+} else {
+    echo "Данные успешно отправлены.";
+}
+?>
+<MainScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        Button:
+            text: "Создать документ"
+            on_release: app.root.current = 'templates'
+
+<TemplateScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(10)
+        padding: dp(20)
+
+        Spinner:
+            id: template_spinner
+            text: "Выбрать шаблон"
+            values: ["Трудовой договор", "Счет-фактура"]
+            on_text: root.on_spinner_select(self.text)
+
+        BoxLayout:
+            id: fields_container
+            orientation: 'vertical'
+
+        Button:
+            text: "Создать документ"
+            size_hint_y: None
+            height: dp(50)
+            on_release: root.create_document()
+
+        Button:
+            text: "Назад"
+            size_hint_y: None
+            height: dp(50)
+            on_release: app.root.current = 'main'
